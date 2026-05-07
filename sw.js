@@ -1,4 +1,4 @@
-const CACHE = 'mygaranzia-v1';
+const CACHE = 'mygaranzia-v2';
 const ASSETS = ['/', '/index.html', '/manifest.json', '/data/data.json'];
 
 self.addEventListener('install', e => {
