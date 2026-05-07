@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#2D7A4F">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MyGaranzia">
+<title>MyGaranzia</title>
+<link rel="manifest" href="/manifest.json">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --green:#2D7A4F;--green-dark:#1A5C3A;--green-light:#E8F5EE;
+  --amber:#F0A500;--amber-light:#FFF8E7;
+  --gray:#6B7280;--gray-light:#F3F4F6;
+  --red:#EF4444;--bg:#F0F4F1;--white:#fff;
+  --text:#1A1A1A;--text-2:#4B5563;--text-3:#9CA3AF;
+  --radius:12px;--shadow:0 2px 12px rgba(0,0,0,0.08);
+  --classe-a:#1A7A4A;--classe-b:#D97706;--classe-c:#6B7280;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100dvh;overflow-x:hidden}
+
+/* HEADER */
+#header{position:fixed;top:0;left:0;right:0;z-index:100;background:var(--green);color:#fff;padding:env(safe-area-inset-top,0) 0 0}
+#header-inner{padding:12px 16px 10px;display:flex;align-items:center;gap:10px}
+#logo{font-size:18px;font-weight:700;letter-spacing:-0.5px;white-space:nowrap}
+#logo span{opacity:0.7;font-weight:400}
+#search-wrap{flex:1;position:relative}
+#search{width:100%;padding:8px 12px 8px 36px;border:none;border-radius:8px;background:rgba(255,255,255,0.18);color:#fff;font-size:15px;outline:none}
+#search::placeholder{color:rgba(255,255,255,0.6)}
+#search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);opacity:0.7;pointer-events:none}
+#clear-btn{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:#fff;font-size:18px;cursor:pointer;opacity:0.7;display:none;padding:2px 6px}
+
+/* FILTERS */
+#filters{background:var(--green-dark);padding:8px 16px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+#filters::-webkit-scrollbar{display:none}
+.chip{padding:5px 12px;border-radius:20px;border:1.5px solid rgba(255,255,255,0.3);background:transparent;color:#fff;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;transition:all .15s}
+.chip.active{background:#fff;color:var(--green-dark);border-color:#fff}
+#sep{width:1px;background:rgba(255,255,255,0.2);flex-shrink:0;margin:2px 2px}
+
+/* STATS BAR */
+#stats-bar{background:#fff;padding:8px 16px;font-size:12px;color:var(--text-2);display:flex;align-items:center;gap:8px;border-bottom:1px solid #E5E7EB}
+#stats-count{font-weight:600;color:var(--green)}
+
+/* MAIN */
+#main{margin-top:0;padding-bottom:env(safe-area-inset-bottom,16px)}
+#list{padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+
+/* CARD */
+.card{background:var(--white);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow);cursor:pointer;transition:transform .1s,box-shadow .1s;border-left:4px solid var(--gray)}
+.card:active{transform:scale(0.98);box-shadow:none}
+.card.cls-a{border-left-color:var(--classe-a)}
+.card.cls-b{border-left-color:var(--classe-b)}
+.card.cls-c{border-left-color:var(--classe-c)}
+.card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px}
+.card-name{font-size:14px;font-weight:600;line-height:1.3;flex:1}
+.badge-wrap{display:flex;align-items:center;gap:5px;flex-shrink:0}
+.badge{padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;letter-spacing:0.5px}
+.badge-a{background:#DCFCE7;color:#166534}
+.badge-b{background:#FEF3C7;color:#92400E}
+.badge-c{background:#F3F4F6;color:#374151}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:3px}
+.dot-attivo{background:#22C55E}
+.dot-tiepido{background:#F59E0B}
+.dot-dormiente{background:#EF4444}
+.dot-sconosciuto{background:#D1D5DB}
+.card-meta{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-2);flex-wrap:wrap}
+.tag{background:var(--gray-light);padding:2px 7px;border-radius:6px;font-size:10px}
+.tag-stihl{background:#DBEAFE;color:#1E40AF}
+.tag-toro{background:#FEE2E2;color:#991B1B}
+.tag-grillo{background:#D1FAE5;color:#065F46}
+
+/* EMPTY STATE */
+#empty{display:none;text-align:center;padding:60px 20px;color:var(--text-3)}
+#empty svg{margin-bottom:12px;opacity:0.3}
+
+/* LOADER */
+#loader{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 20px;gap:12px;color:var(--text-2)}
+.spinner{width:32px;height:32px;border:3px solid #E5E7EB;border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* LOAD MORE */
+#load-more{display:none;margin:8px 12px 4px;padding:12px;background:#fff;border:1.5px solid var(--green);border-radius:var(--radius);color:var(--green);font-size:14px;font-weight:600;width:calc(100% - 24px);cursor:pointer}
+
+/* DRAWER */
+#overlay{position:fixed;inset:0;background:rgba(0,0,0,0);z-index:200;pointer-events:none;transition:background .25s}
+#overlay.open{background:rgba(0,0,0,0.4);pointer-events:all}
+#drawer{position:fixed;bottom:0;left:0;right:0;max-height:92dvh;background:#fff;border-radius:20px 20px 0 0;z-index:201;transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1);overflow:hidden;display:flex;flex-direction:column}
+#drawer.open{transform:translateY(0)}
+#drawer-handle{width:36px;height:4px;background:#D1D5DB;border-radius:2px;margin:12px auto 0}
+#drawer-header{padding:12px 16px 10px;flex-shrink:0}
+#drawer-name{font-size:18px;font-weight:700;line-height:1.2;margin-bottom:4px}
+#drawer-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+#drawer-scroll{overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1;padding:0 16px 16px}
+
+/* DRAWER SECTIONS */
+.section{margin-top:16px}
+.section-title{font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:var(--text-3);margin-bottom:8px}
+.info-row{display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid #F3F4F6}
+.info-row:last-child{border-bottom:none}
+.info-icon{width:32px;height:32px;border-radius:8px;background:var(--green-light);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px}
+.info-label{font-size:11px;color:var(--text-3)}
+.info-val{font-size:14px;font-weight:500}
+
+/* ACTIONS */
+#drawer-actions{display:flex;gap:8px;margin-top:12px}
+.btn{padding:11px 16px;border-radius:10px;border:none;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;flex:1;justify-content:center}
+.btn-wa{background:#25D366;color:#fff}
+.btn-call{background:var(--green-light);color:var(--green)}
+.btn-disabled{background:var(--gray-light);color:var(--text-3);cursor:default}
+
+/* STORICO */
+.storico-item{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #F3F4F6}
+.storico-item:last-child{border-bottom:none}
+.storico-dot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex-shrink:0}
+.storico-info{flex:1}
+.storico-modello{font-size:13px;font-weight:500}
+.storico-meta{font-size:11px;color:var(--text-3);margin-top:1px}
+
+/* NOTE */
+#note-area{width:100%;border:1.5px solid #E5E7EB;border-radius:10px;padding:10px;font-size:14px;font-family:inherit;resize:none;min-height:80px;outline:none;color:var(--text);background:#fff;transition:border-color .15s}
+#note-area:focus{border-color:var(--green)}
+#note-status{font-size:11px;color:var(--text-3);margin-top:4px;height:14px}
+
+/* SEMAFORO */
+.stato-pill{padding:3px 10px;border-radius:10px;font-size:11px;font-weight:600;display:inline-flex;align-items:center;gap:4px}
+.stato-attivo{background:#DCFCE7;color:#166534}
+.stato-tiepido{background:#FEF3C7;color:#92400E}
+.stato-dormiente{background:#FEE2E2;color:#991B1B}
+.stato-sconosciuto{background:#F3F4F6;color:#6B7280}
+
+@media(min-width:640px){
+  #drawer{max-width:480px;left:50%;transform:translateX(-50%) translateY(100%)}
+  #drawer.open{transform:translateX(-50%) translateY(0)}
+  #list{max-width:640px;margin:0 auto}
+}
+</style>
+</head>
+<body>
+
+<div id="header">
+  <div id="header-inner">
+    <div id="logo">My<span>Garanzia</span></div>
+    <div id="search-wrap">
+      <svg id="search-icon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#fff" stroke-width="2.5">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+      <input id="search" type="search" placeholder="Cerca cliente..." autocomplete="off" autocorrect="off">
+      <button id="clear-btn" onclick="clearSearch()">×</button>
+    </div>
+  </div>
+  <div id="filters">
+    <button class="chip active" data-filter="classe" data-val="tutti" onclick="setFilter(this,'classe')">Tutti</button>
+    <button class="chip" data-filter="classe" data-val="A" onclick="setFilter(this,'classe')">Classe A</button>
+    <button class="chip" data-filter="classe" data-val="B" onclick="setFilter(this,'classe')">Classe B</button>
+    <button class="chip" data-filter="classe" data-val="C" onclick="setFilter(this,'classe')">Classe C</button>
+    <div id="sep"></div>
+    <button class="chip active" data-filter="stato" data-val="tutti" onclick="setFilter(this,'stato')">Tutti</button>
+    <button class="chip" data-filter="stato" data-val="attivo" onclick="setFilter(this,'stato')">🟢 Attivi</button>
+    <button class="chip" data-filter="stato" data-val="tiepido" onclick="setFilter(this,'stato')">🟡 Tiepidi</button>
+    <button class="chip" data-filter="stato" data-val="dormiente" onclick="setFilter(this,'stato')">🔴 Dormienti</button>
+    <div id="sep"></div>
+    <button class="chip active" data-filter="rubrica" data-val="tutti" onclick="setFilter(this,'rubrica')">Tutti</button>
+    <button class="chip" data-filter="rubrica" data-val="si" onclick="setFilter(this,'rubrica')">In rubrica</button>
+    <button class="chip" data-filter="rubrica" data-val="no" onclick="setFilter(this,'rubrica')">Mancanti</button>
+  </div>
+</div>
+
+<div id="main" style="padding-top:110px">
+  <div id="stats-bar">
+    <span id="stats-count">–</span>
+    <span>clienti trovati</span>
+    <span style="margin-left:auto;color:var(--text-3)" id="stats-update"></span>
+  </div>
+  <div id="loader"><div class="spinner"></div><span>Caricamento dati...</span></div>
+  <div id="list"></div>
+  <div id="empty">
+    <svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <div style="font-size:16px;color:var(--text-2);font-weight:500">Nessun cliente trovato</div>
+    <div style="margin-top:4px;font-size:13px">Prova con un altro termine</div>
+  </div>
+  <button id="load-more" onclick="loadMore()">Carica altri risultati</button>
+</div>
+
+<!-- DRAWER -->
+<div id="overlay" onclick="closeDrawer()"></div>
+<div id="drawer">
+  <div id="drawer-handle"></div>
+  <div id="drawer-header">
+    <div id="drawer-name"></div>
+    <div id="drawer-meta"></div>
+    <div id="drawer-actions"></div>
+  </div>
+  <div id="drawer-scroll" id="drawer-body"></div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://eoswkplehhmtxtatsha.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVvc3drcGxlaGhtdHh0YXR0c2hhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY2MTY3NzcsImV4cCI6MjA4MjE5Mjc3N30.cUg61XjJf2fmTi6dAQ2EaBl49pRrtgBTN7A2EyMyvLI';
+
+let ALL = [], filtered = [], shown = 0;
+const PAGE = 40;
+const filters = { classe: 'tutti', stato: 'tutti', rubrica: 'tutti' };
+let searchQ = '';
+let noteTimer = null;
+
+// --- LOAD DATA ---
+async function init() {
+  try {
+    const res = await fetch('/data/data.json');
+    const json = await res.json();
+    ALL = json.clienti || [];
+    document.getElementById('stats-update').textContent = 'Aggiornato: ' + (json.generato || '–');
+    document.getElementById('loader').style.display = 'none';
+    applyFilters();
+  } catch(e) {
+    document.getElementById('loader').innerHTML = '<div style="color:#EF4444">Errore caricamento dati</div>';
+  }
+}
+
+// --- FILTERS ---
+function setFilter(btn, type) {
+  document.querySelectorAll(`[data-filter="${type}"]`).forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  filters[type] = btn.dataset.val;
+  applyFilters();
+}
+
+document.getElementById('search').addEventListener('input', e => {
+  searchQ = e.target.value.toLowerCase().trim();
+  document.getElementById('clear-btn').style.display = searchQ ? 'block' : 'none';
+  applyFilters();
+});
+
+function clearSearch() {
+  document.getElementById('search').value = '';
+  searchQ = '';
+  document.getElementById('clear-btn').style.display = 'none';
+  applyFilters();
+}
+
+function applyFilters() {
+  filtered = ALL.filter(c => {
+    if (filters.classe !== 'tutti' && c.classe !== filters.classe) return false;
+    if (filters.stato !== 'tutti' && c.stato !== filters.stato) return false;
+    if (filters.rubrica === 'si' && !c.in_rubrica) return false;
+    if (filters.rubrica === 'no' && c.in_rubrica) return false;
+    if (searchQ) {
+      const hay = (c.nome + ' ' + c.citta + ' ' + c.brand).toLowerCase();
+      if (!hay.includes(searchQ)) return false;
+    }
+    return true;
+  });
+  shown = 0;
+  document.getElementById('list').innerHTML = '';
+  document.getElementById('stats-count').textContent = filtered.length;
+  document.getElementById('empty').style.display = filtered.length ? 'none' : 'block';
+  document.getElementById('load-more').style.display = 'none';
+  loadMore();
+}
+
+function loadMore() {
+  const chunk = filtered.slice(shown, shown + PAGE);
+  const frag = document.createDocumentFragment();
+  chunk.forEach(c => frag.appendChild(makeCard(c)));
+  document.getElementById('list').appendChild(frag);
+  shown += chunk.length;
+  const btn = document.getElementById('load-more');
+  btn.style.display = shown < filtered.length ? 'block' : 'none';
+  if (shown < filtered.length) btn.textContent = `Carica altri (${filtered.length - shown} rimasti)`;
+}
+
+// --- CARD ---
+function brandTag(b) {
+  const cls = {'STIHL':'tag-stihl','TORO':'tag-toro','GRILLO':'tag-grillo'}[b] || '';
+  return `<span class="tag ${cls}">${b}</span>`;
+}
+
+function makeCard(c) {
+  const div = document.createElement('div');
+  div.className = `card cls-${c.classe.toLowerCase()}`;
+  div.onclick = () => openDrawer(c);
+  const brands = c.brand.split(' + ').map(brandTag).join('');
+  const dotCls = `dot-${c.stato}`;
+  const badgeCls = `badge-${c.classe.toLowerCase()}`;
+  div.innerHTML = `
+    <div class="card-top">
+      <div class="card-name">${esc(c.nome)}</div>
+      <div class="badge-wrap">
+        <div class="dot ${dotCls}"></div>
+        <span class="badge ${badgeCls}">${c.classe}</span>
+      </div>
+    </div>
+    <div class="card-meta">
+      ${c.citta ? `<span>📍 ${esc(c.citta)}</span>` : ''}
+      <span>🛒 ${c.n_acquisti} acquisti</span>
+      ${brands}
+    </div>`;
+  return div;
+}
+
+// --- DRAWER ---
+let drawerTouch = {start:0, current:0};
+const drawer = document.getElementById('drawer');
+drawer.addEventListener('touchstart', e => { drawerTouch.start = e.touches[0].clientY; }, {passive:true});
+drawer.addEventListener('touchmove', e => {
+  drawerTouch.current = e.touches[0].clientY;
+  const diff = drawerTouch.current - drawerTouch.start;
+  if (diff > 0) drawer.style.transform = `translateY(${diff}px)`;
+}, {passive:true});
+drawer.addEventListener('touchend', () => {
+  const diff = drawerTouch.current - drawerTouch.start;
+  if (diff > 80) closeDrawer();
+  else drawer.style.transform = '';
+  drawerTouch = {start:0, current:0};
+});
+
+function openDrawer(c) {
+  const handle = document.getElementById('drawer-handle');
+  document.getElementById('drawer-name').textContent = c.nome;
+  document.getElementById('drawer-meta').innerHTML = buildMeta(c);
+  document.getElementById('drawer-actions').innerHTML = buildActions(c);
+  document.getElementById('drawer-scroll').innerHTML = buildBody(c);
+  loadNota(c.key);
+  document.getElementById('overlay').classList.add('open');
+  drawer.classList.add('open');
+  drawer.style.transform = '';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDrawer() {
+  drawer.classList.remove('open');
+  document.getElementById('overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function buildMeta(c) {
+  const stato = c.stato || 'sconosciuto';
+  return `
+    <span class="stato-pill stato-${stato}">${statoLabel(stato)}</span>
+    <span class="badge badge-${c.classe.toLowerCase()}">${c.classe}</span>
+    <span class="tag" style="font-size:10px">${esc(c.tipo)}</span>`;
+}
+
+function statoLabel(s) {
+  return {attivo:'🟢 Attivo', tiepido:'🟡 Tiepido', dormiente:'🔴 Dormiente', sconosciuto:'⚫ N/D'}[s] || s;
+}
+
+function buildActions(c) {
+  const tel = c.telefono ? c.telefono.replace(/\s/g,'') : '';
+  const wa = tel ? `<button class="btn btn-wa" onclick="openWA('${tel}')">💬 WhatsApp</button>` :
+                   `<button class="btn btn-disabled" disabled>💬 No numero</button>`;
+  const call = tel ? `<button class="btn btn-call" onclick="callNum('${tel}')">📞 Chiama</button>` : '';
+  return wa + call;
+}
+
+function openWA(tel) {
+  const n = tel.startsWith('+') ? tel.replace('+','') : '39' + tel.replace(/^0/,'');
+  window.open(`https://wa.me/${n}`, '_blank');
+}
+
+function callNum(tel) { window.location.href = `tel:${tel}`; }
+
+function buildBody(c) {
+  let html = `<div class="section"><div class="section-title">Informazioni</div>`;
+  html += infoRow('📍', 'Città', c.citta || '–');
+  html += infoRow('🏷️', 'Brand', c.brand || '–');
+  html += infoRow('🛒', 'Acquisti totali', c.n_acquisti);
+  html += infoRow('📅', 'Ultimo acquisto', fmtDate(c.ultimo_acquisto));
+  html += infoRow('📅', 'Primo acquisto', fmtDate(c.primo_acquisto));
+  html += infoRow('📱', 'In rubrica WA', c.in_rubrica ? '✅ Sì' : '❌ No');
+  html += `</div>`;
+
+  const storico = (c.storico || []).slice(0, 30);
+  if (storico.length) {
+    html += `<div class="section"><div class="section-title">Storico acquisti (${c.storico.length})</div>`;
+    storico.forEach(s => {
+      const col = {STIHL:'#1E40AF',TORO:'#991B1B',GRILLO:'#065F46'}[s.brand]||'#6B7280';
+      html += `<div class="storico-item">
+        <div class="storico-dot" style="background:${col}"></div>
+        <div class="storico-info">
+          <div class="storico-modello">${esc(s.modello||s.tipo||'–')}</div>
+          <div class="storico-meta">${s.brand} · ${fmtDate(s.data)}</div>
+        </div></div>`;
+    });
+    if (c.storico.length > 30) html += `<div style="font-size:11px;color:var(--text-3);padding:6px 0">...e altri ${c.storico.length-30} acquisti</div>`;
+    html += `</div>`;
+  }
+
+  html += `<div class="section">
+    <div class="section-title">Note</div>
+    <textarea id="note-area" placeholder="Aggiungi note su questo cliente..." oninput="scheduleNota('${c.key}')"></textarea>
+    <div id="note-status"></div>
+  </div>`;
+
+  return html;
+}
+
+function infoRow(icon, label, val) {
+  return `<div class="info-row">
+    <div class="info-icon">${icon}</div>
+    <div><div class="info-label">${label}</div><div class="info-val">${esc(String(val))}</div></div>
+  </div>`;
+}
+
+function fmtDate(d) {
+  if (!d) return '–';
+  try { return new Date(d).toLocaleDateString('it-IT',{day:'2-digit',month:'short',year:'numeric'}); }
+  catch { return d; }
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// --- SUPABASE NOTES ---
+async function loadNota(key) {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/note_clienti?cliente_key=eq.${encodeURIComponent(key)}&select=testo`, {
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+    });
+    const data = await res.json();
+    const area = document.getElementById('note-area');
+    if (area) area.value = data[0]?.testo || '';
+  } catch {}
+}
+
+function scheduleNota(key) {
+  clearTimeout(noteTimer);
+  const st = document.getElementById('note-status');
+  if (st) st.textContent = 'In scrittura...';
+  noteTimer = setTimeout(() => saveNota(key), 1500);
+}
+
+async function saveNota(key) {
+  const area = document.getElementById('note-area');
+  const st = document.getElementById('note-status');
+  if (!area) return;
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/note_clienti`, {
+      method: 'POST',
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        Prefer: 'resolution=merge-duplicates'
+      },
+      body: JSON.stringify({ cliente_key: key, testo: area.value, updated_at: new Date().toISOString() })
+    });
+    if (st) st.textContent = '✓ Salvato';
+    setTimeout(() => { if (st) st.textContent = ''; }, 2000);
+  } catch {
+    if (st) st.textContent = '⚠ Errore salvataggio';
+  }
+}
+
+// --- SW ---
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js');
+}
+
+init();
+</script>
+</body>
+</html>
