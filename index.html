@@ -357,11 +357,16 @@ function buildActions(c) {
 }
 
 function openWA(tel) {
-  const n = tel.startsWith('+') ? tel.replace('+','') : '39' + tel.replace(/^0/,'');
-  window.open(`https://wa.me/${n}`, '_blank');
+  let n = String(tel).replace(/\D/g, '');
+  if (!n.startsWith('39') || n.length < 11) n = '39' + n.replace(/^0/, '');
+  window.open('https://wa.me/' + n, '_blank');
 }
 
-function callNum(tel) { window.location.href = `tel:${tel}`; }
+function callNum(tel) {
+  let n = String(tel).replace(/\D/g, '');
+  if (!n.startsWith('39') || n.length < 11) n = '39' + n.replace(/^0/, '');
+  window.location.href = 'tel:+' + n;
+}
 
 function buildBody(c) {
   let html = `<div class="section"><div class="section-title">Informazioni</div>`;
