@@ -249,7 +249,11 @@ function applyFilters() {
     if (filters.rubrica === 'no' && c.in_rubrica) return false;
     if (searchQ) {
       const hay = (c.nome + ' ' + c.citta + ' ' + c.brand).toLowerCase();
-      if (!hay.includes(searchQ)) return false;
+      const modelMatch = c.storico && c.storico.some(s =>
+        (s.modello || '').toLowerCase().includes(searchQ) ||
+        (s.tipo || '').toLowerCase().includes(searchQ)
+      );
+      if (!hay.includes(searchQ) && !modelMatch) return false;
     }
     return true;
   });
