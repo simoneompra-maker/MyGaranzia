@@ -252,13 +252,19 @@ function applyFilters() {
     if (filters.rubrica === 'si' && !c.in_rubrica) return false;
     if (filters.rubrica === 'no' && c.in_rubrica) return false;
     if (searchQ) {
-      const words = searchQ.split(/\s+/).filter(Boolean);
+      // Supporta ricerca multipla con virgola: "toro 7500, grillo fd 2200"
+      const terms = searchQ.split(',').map(t => t.trim()).filter(Boolean);
       const base = (c.nome + ' ' + c.citta + ' ' + c.brand + ' ' + c.tipo).toLowerCase();
       const storico = c.storico ? c.storico.map(s =>
         ((s.modello || '') + ' ' + (s.tipo || '') + ' ' + (s.brand || '')).toLowerCase()
       ).join(' ') : '';
       const full = base + ' ' + storico;
-      if (!words.every(w => full.includes(w))) return false;
+      // Almeno un termine deve corrispondere (OR tra termini, AND tra parole di ogni termine)
+      const match = terms.some(term => {
+        const words = term.split(/\s+/).filter(Boolean);
+        return words.every(w => full.includes(w));
+      });
+      if (!match) return false;
     }
     return true;
   });
