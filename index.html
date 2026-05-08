@@ -518,12 +518,10 @@ function exportExcel() {
 
       const riepilogo = filtered.map(c => ({
         'Nome / Ragione Sociale': c.nome,
-        'Classe': c.classe,
         'Tipo Cliente': c.tipo,
         'Stato': c.stato,
         'Brand': c.brand,
         'N. Acquisti': c.n_acquisti,
-        'Multi-Brand': c.multi_brand ? 'SI' : '',
         'Modelli Acquistati': modeliCliente(c),
         'In Rubrica WA': c.in_rubrica ? 'SI' : 'NO',
         'Telefono': c.telefono ? '+' + String(c.telefono).replace(/\.\d+e\+\d+/, m => Math.round(Number(m)).toString()) : '',
@@ -571,12 +569,12 @@ function exportExcel() {
       const ws1 = XLSX.utils.aoa_to_sheet(titleRows1);
       XLSX.utils.sheet_add_json(ws1, riepilogo, {origin: 'A4', skipHeader: false});
 
-      ws1['!cols'] = [42,8,20,12,20,12,12,40,14,18,18,14,14].map(w=>({wch:w}));
+      ws1['!cols'] = [26,13,8,13,7,22,7,13,12,9,9].map(w=>({wch:w}));
       ws1['!rows'] = [{hpt:20},{hpt:16},{hpt:8},{hpt:18}];
       ws1['!freeze'] = {xSplit:0, ySplit:4};
       ws1['!pageSetup'] = {orientation:'landscape', fitToPage:true, fitToWidth:1, fitToHeight:0, paperSize:9};
       ws1['!margins'] = {left:0.5,right:0.5,top:0.75,bottom:0.75,header:0.3,footer:0.3};
-      ws1['!autofilter'] = {ref: 'A4:M4'};
+      ws1['!autofilter'] = {ref: 'A4:K4'};
 
       // ---- FOGLIO 2 DETTAGLIO ----
       const titleRows2 = [
@@ -587,7 +585,7 @@ function exportExcel() {
       const ws2 = XLSX.utils.aoa_to_sheet(titleRows2);
       XLSX.utils.sheet_add_json(ws2, dettaglio, {origin: 'A4', skipHeader: false});
 
-      ws2['!cols'] = [42,8,18,18,10,24,24,14].map(w=>({wch:w}));
+      ws2['!cols'] = [26,5,13,14,8,18,18,10].map(w=>({wch:w}));
       ws2['!rows'] = [{hpt:20},{hpt:16},{hpt:8},{hpt:18}];
       ws2['!freeze'] = {xSplit:0, ySplit:4};
       ws2['!pageSetup'] = {orientation:'landscape', fitToPage:true, fitToWidth:1, fitToHeight:0, paperSize:9};
