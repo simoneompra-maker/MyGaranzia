@@ -248,12 +248,13 @@ function applyFilters() {
     if (filters.rubrica === 'si' && !c.in_rubrica) return false;
     if (filters.rubrica === 'no' && c.in_rubrica) return false;
     if (searchQ) {
-      const hay = (c.nome + ' ' + c.citta + ' ' + c.brand).toLowerCase();
-      const modelMatch = c.storico && c.storico.some(s =>
-        (s.modello || '').toLowerCase().includes(searchQ) ||
-        (s.tipo || '').toLowerCase().includes(searchQ)
-      );
-      if (!hay.includes(searchQ) && !modelMatch) return false;
+      const words = searchQ.split(/\s+/).filter(Boolean);
+      const base = (c.nome + ' ' + c.citta + ' ' + c.brand + ' ' + c.tipo).toLowerCase();
+      const storico = c.storico ? c.storico.map(s =>
+        ((s.modello || '') + ' ' + (s.tipo || '') + ' ' + (s.brand || '')).toLowerCase()
+      ).join(' ') : '';
+      const full = base + ' ' + storico;
+      if (!words.every(w => full.includes(w))) return false;
     }
     return true;
   });
