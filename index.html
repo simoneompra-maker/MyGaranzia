@@ -494,9 +494,20 @@ function exportExcel() {
 
       const modeliCliente = c => {
         if (!c.storico || !c.storico.length) return '';
+        const terms = searchQ
+          ? searchQ.split(',').map(t => t.trim()).filter(Boolean)
+          : [];
         const byBrand = {};
         c.storico.forEach(s => {
           if (!s.modello) return;
+          // Se c'è una ricerca attiva, includi solo i modelli che matchano almeno un termine
+          if (terms.length) {
+            const stxt = ((s.modello||'')+' '+(s.tipo||'')+' '+(s.brand||'')).toLowerCase();
+            const matches = terms.some(term =>
+              term.split(/\s+/).filter(Boolean).every(w => stxt.includes(w))
+            );
+            if (!matches) return;
+          }
           if (!byBrand[s.brand]) byBrand[s.brand] = new Set();
           byBrand[s.brand].add(s.modello.trim());
         });
