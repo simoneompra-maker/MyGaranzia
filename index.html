@@ -486,6 +486,25 @@ function exportExcel() {
   setTimeout(() => {
     try {
       // Foglio 1 — Riepilogo clienti
+      const fmtIT = d => {
+        if (!d) return '';
+        const p = d.split('-');
+        return p.length === 3 ? p[2]+'/'+p[1]+'/'+p[0] : d;
+      };
+
+      const modeliCliente = c => {
+        if (!c.storico || !c.storico.length) return '';
+        const byBrand = {};
+        c.storico.forEach(s => {
+          if (!s.modello) return;
+          if (!byBrand[s.brand]) byBrand[s.brand] = new Set();
+          byBrand[s.brand].add(s.modello.trim());
+        });
+        return Object.entries(byBrand)
+          .map(([b, mods]) => b + ': ' + [...mods].join(', '))
+          .join(' | ');
+      };
+
       const riepilogo = filtered.map(c => ({
         'Nome / Ragione Sociale': c.nome,
         'Classe': c.classe,
@@ -494,11 +513,12 @@ function exportExcel() {
         'Brand': c.brand,
         'N. Acquisti': c.n_acquisti,
         'Multi-Brand': c.multi_brand ? 'SI' : '',
+        'Modelli Acquistati': modeliCliente(c),
         'In Rubrica WA': c.in_rubrica ? 'SI' : 'NO',
         'Telefono': c.telefono || '',
         'Città': c.citta || '',
-        'Primo Acquisto': c.primo_acquisto || '',
-        'Ultimo Acquisto': c.ultimo_acquisto || '',
+        'Primo Acquisto': fmtIT(c.primo_acquisto),
+        'Ultimo Acquisto': fmtIT(c.ultimo_acquisto),
       }));
 
       // Foglio 2 — Dettaglio acquisti
@@ -513,7 +533,7 @@ function exportExcel() {
             'Brand': s.brand,
             'Tipo Prodotto': s.tipo || '',
             'Modello': s.modello || '',
-            'Data Acquisto': s.data || '',
+            'Data Acquisto': fmtIT(s.data),
           });
         });
       });
@@ -523,7 +543,7 @@ function exportExcel() {
       const ws2 = XLSX.utils.json_to_sheet(dettaglio);
 
       // Larghezze colonne
-      ws1['!cols'] = [42,8,20,12,20,12,12,14,18,18,14,14].map(w=>({wch:w}));
+      ws1['!cols'] = [42,8,20,12,20,12,12,40,14,18,18,14,14].map(w=>({wch:w}));
       ws2['!cols'] = [42,8,18,18,10,22,22,14].map(w=>({wch:w}));
 
       XLSX.utils.book_append_sheet(wb, ws1, 'Clienti');
