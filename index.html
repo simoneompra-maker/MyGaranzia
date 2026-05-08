@@ -516,19 +516,23 @@ function exportExcel() {
           .join(' | ');
       };
 
-      const riepilogo = filtered.map(c => ({
-        'Nome / Ragione Sociale': c.nome,
-        'Tipo Cliente': c.tipo,
-        'Stato': c.stato,
-        'Brand': c.brand,
-        'N. Acquisti': c.n_acquisti,
-        'Modelli Acquistati': modeliCliente(c),
-        'In Rubrica WA': c.in_rubrica ? 'SI' : 'NO',
-        'Telefono': c.telefono ? '+' + String(c.telefono).replace(/\.\d+e\+\d+/, m => Math.round(Number(m)).toString()) : '',
-        'Città': c.citta || '',
-        'Primo Acquisto': fmtIT(c.primo_acquisto),
-        'Ultimo Acquisto': fmtIT(c.ultimo_acquisto),
-      }));
+      const showBrand = !searchQ;
+      const riepilogo = filtered.map(c => {
+        const row = {
+          'Nome / Ragione Sociale': c.nome,
+          'Tipo Cliente': c.tipo,
+          'Stato': c.stato,
+        };
+        if (showBrand) row['Brand'] = c.brand;
+        row['N. Acquisti'] = c.n_acquisti;
+        row['Modelli Acquistati'] = modeliCliente(c);
+        row['In Rubrica WA'] = c.in_rubrica ? 'SI' : 'NO';
+        row['Telefono'] = c.telefono ? '+' + String(c.telefono).replace(/\.\d+e\+\d+/, m => Math.round(Number(m)).toString()) : '';
+        row['Città'] = c.citta || '';
+        row['Primo Acquisto'] = fmtIT(c.primo_acquisto);
+        row['Ultimo Acquisto'] = fmtIT(c.ultimo_acquisto);
+        return row;
+      });
 
       // Foglio 2 — Dettaglio acquisti
       const dettaglio = [];
@@ -569,12 +573,16 @@ function exportExcel() {
       const ws1 = XLSX.utils.aoa_to_sheet(titleRows1);
       XLSX.utils.sheet_add_json(ws1, riepilogo, {origin: 'A4', skipHeader: false});
 
-      ws1['!cols'] = [26,13,8,13,7,22,7,13,12,9,9].map(w=>({wch:w}));
+      ws1['!cols'] = showBrand
+        ? [26,13,8,13,7,22,7,13,12,9,9].map(w=>({wch:w}))
+        : [28,14,9,8,24,8,14,13,10,10].map(w=>({wch:w}));
+      const lastCol1 = showBrand ? 'K' : 'J';
+      ws1['!autofilter'] = {ref: \`A4:\${lastCol1}4\`};
       ws1['!rows'] = [{hpt:20},{hpt:16},{hpt:8},{hpt:18}];
       ws1['!freeze'] = {xSplit:0, ySplit:4};
       ws1['!pageSetup'] = {orientation:'landscape', fitToPage:true, fitToWidth:1, fitToHeight:0, paperSize:9};
       ws1['!margins'] = {left:0.5,right:0.5,top:0.75,bottom:0.75,header:0.3,footer:0.3};
-      ws1['!autofilter'] = {ref: 'A4:K4'};
+      
 
       // ---- FOGLIO 2 DETTAGLIO ----
       const titleRows2 = [
