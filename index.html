@@ -526,7 +526,7 @@ function exportExcel() {
         'Multi-Brand': c.multi_brand ? 'SI' : '',
         'Modelli Acquistati': modeliCliente(c),
         'In Rubrica WA': c.in_rubrica ? 'SI' : 'NO',
-        'Telefono': c.telefono || '',
+        'Telefono': c.telefono ? '+' + String(c.telefono).replace(/\.\d+e\+\d+/, m => Math.round(Number(m)).toString()) : '',
         'Città': c.citta || '',
         'Primo Acquisto': fmtIT(c.primo_acquisto),
         'Ultimo Acquisto': fmtIT(c.ultimo_acquisto),
@@ -540,7 +540,7 @@ function exportExcel() {
             'Nome / Ragione Sociale': c.nome,
             'Classe': c.classe,
             'Città': c.citta || '',
-            'Telefono': c.telefono || '',
+            'Telefono': c.telefono ? '+' + String(c.telefono).replace(/\.\d+e\+\d+/, m => Math.round(Number(m)).toString()) : '',
             'Brand': s.brand,
             'Tipo Prodotto': s.tipo || '',
             'Modello': s.modello || '',
@@ -550,18 +550,53 @@ function exportExcel() {
       });
 
       const wb = XLSX.utils.book_new();
-      const ws1 = XLSX.utils.json_to_sheet(riepilogo);
-      const ws2 = XLSX.utils.json_to_sheet(dettaglio);
+      const today = new Date();
+      const todayIT = today.toLocaleDateString('it-IT');
+      const todayISO = today.toISOString().slice(0,10);
 
-      // Larghezze colonne
+      // Info riga titolo
+      const filtroDesc = [
+        searchQ ? `Ricerca: "${searchQ}"` : '',
+        filters.classe !== 'tutti' ? `Classe: ${filters.classe}` : '',
+        filters.stato !== 'tutti' ? `Stato: ${filters.stato}` : '',
+        filters.rubrica !== 'tutti' ? `Rubrica: ${filters.rubrica}` : '',
+      ].filter(Boolean).join(' | ') || 'Tutti i clienti';
+
+      // ---- FOGLIO 1 CLIENTI ----
+      const titleRows1 = [
+        ['MYGARANZIA — EXPORT CLIENTI', '', '', '', '', '', '', '', '', '', '', '', ''],
+        [`Data export: ${todayIT}`, '', '', `Filtro: ${filtroDesc}`, '', '', '', '', '', `Tot. clienti: ${filtered.length}`, '', '', ''],
+        [],
+      ];
+      const ws1 = XLSX.utils.aoa_to_sheet(titleRows1);
+      XLSX.utils.sheet_add_json(ws1, riepilogo, {origin: 'A4', skipHeader: false});
+
       ws1['!cols'] = [42,8,20,12,20,12,12,40,14,18,18,14,14].map(w=>({wch:w}));
-      ws2['!cols'] = [42,8,18,18,10,22,22,14].map(w=>({wch:w}));
+      ws1['!rows'] = [{hpt:20},{hpt:16},{hpt:8},{hpt:18}];
+      ws1['!freeze'] = {xSplit:0, ySplit:4};
+      ws1['!pageSetup'] = {orientation:'landscape', fitToPage:true, fitToWidth:1, fitToHeight:0, paperSize:9};
+      ws1['!margins'] = {left:0.5,right:0.5,top:0.75,bottom:0.75,header:0.3,footer:0.3};
+      ws1['!autofilter'] = {ref: 'A4:M4'};
+
+      // ---- FOGLIO 2 DETTAGLIO ----
+      const titleRows2 = [
+        ['MYGARANZIA — DETTAGLIO ACQUISTI', '', '', '', '', '', '', ''],
+        [`Data export: ${todayIT}`, '', '', `Filtro: ${filtroDesc}`, '', '', '', ''],
+        [],
+      ];
+      const ws2 = XLSX.utils.aoa_to_sheet(titleRows2);
+      XLSX.utils.sheet_add_json(ws2, dettaglio, {origin: 'A4', skipHeader: false});
+
+      ws2['!cols'] = [42,8,18,18,10,24,24,14].map(w=>({wch:w}));
+      ws2['!rows'] = [{hpt:20},{hpt:16},{hpt:8},{hpt:18}];
+      ws2['!freeze'] = {xSplit:0, ySplit:4};
+      ws2['!pageSetup'] = {orientation:'landscape', fitToPage:true, fitToWidth:1, fitToHeight:0, paperSize:9};
+      ws2['!margins'] = {left:0.5,right:0.5,top:0.75,bottom:0.75,header:0.3,footer:0.3};
+      ws2['!autofilter'] = {ref: 'A4:H4'};
 
       XLSX.utils.book_append_sheet(wb, ws1, 'Clienti');
       XLSX.utils.book_append_sheet(wb, ws2, 'Dettaglio Acquisti');
-
-      const today = new Date().toISOString().slice(0,10);
-      XLSX.writeFile(wb, `MyGaranzia_export_${today}.xlsx`);
+      XLSX.writeFile(wb, `MyGaranzia_${todayISO}.xlsx`);
     } catch(e) {
       alert('Errore esportazione: ' + e.message);
     }
