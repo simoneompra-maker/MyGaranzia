@@ -137,6 +137,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   #list{max-width:640px;margin:0 auto}
 }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 
@@ -172,7 +173,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div id="stats-bar">
     <span id="stats-count">–</span>
     <span>clienti trovati</span>
-    <span style="margin-left:auto;color:var(--text-3)" id="stats-update"></span>
+    <button id="export-btn" onclick="exportExcel()" style="margin-left:auto;padding:5px 12px;background:var(--green);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px">
+      📥 Esporta
+    </button>
+    <span style="color:var(--text-3)" id="stats-update"></span>
   </div>
   <div id="loader"><div class="spinner"></div><span>Caricamento dati...</span></div>
   <div id="list"></div>
@@ -464,6 +468,70 @@ async function saveNota(key) {
   } catch {
     if (st) st.textContent = '⚠ Errore salvataggio';
   }
+}
+
+
+// --- EXPORT EXCEL ---
+function exportExcel() {
+  const btn = document.getElementById('export-btn');
+  btn.textContent = '⏳ Generando...';
+  btn.disabled = true;
+
+  setTimeout(() => {
+    try {
+      // Foglio 1 — Riepilogo clienti
+      const riepilogo = filtered.map(c => ({
+        'Nome / Ragione Sociale': c.nome,
+        'Classe': c.classe,
+        'Tipo Cliente': c.tipo,
+        'Stato': c.stato,
+        'Brand': c.brand,
+        'N. Acquisti': c.n_acquisti,
+        'Multi-Brand': c.multi_brand ? 'SI' : '',
+        'In Rubrica WA': c.in_rubrica ? 'SI' : 'NO',
+        'Telefono': c.telefono || '',
+        'Città': c.citta || '',
+        'Primo Acquisto': c.primo_acquisto || '',
+        'Ultimo Acquisto': c.ultimo_acquisto || '',
+      }));
+
+      // Foglio 2 — Dettaglio acquisti
+      const dettaglio = [];
+      filtered.forEach(c => {
+        (c.storico || []).forEach(s => {
+          dettaglio.push({
+            'Nome / Ragione Sociale': c.nome,
+            'Classe': c.classe,
+            'Città': c.citta || '',
+            'Telefono': c.telefono || '',
+            'Brand': s.brand,
+            'Tipo Prodotto': s.tipo || '',
+            'Modello': s.modello || '',
+            'Data Acquisto': s.data || '',
+          });
+        });
+      });
+
+      const wb = XLSX.utils.book_new();
+      const ws1 = XLSX.utils.json_to_sheet(riepilogo);
+      const ws2 = XLSX.utils.json_to_sheet(dettaglio);
+
+      // Larghezze colonne
+      ws1['!cols'] = [42,8,20,12,20,12,12,14,18,18,14,14].map(w=>({wch:w}));
+      ws2['!cols'] = [42,8,18,18,10,22,22,14].map(w=>({wch:w}));
+
+      XLSX.utils.book_append_sheet(wb, ws1, 'Clienti');
+      XLSX.utils.book_append_sheet(wb, ws2, 'Dettaglio Acquisti');
+
+      const today = new Date().toISOString().slice(0,10);
+      XLSX.writeFile(wb, `MyGaranzia_export_${today}.xlsx`);
+    } catch(e) {
+      alert('Errore esportazione: ' + e.message);
+    }
+
+    btn.innerHTML = '📥 Esporta';
+    btn.disabled = false;
+  }, 100);
 }
 
 // --- SW ---
